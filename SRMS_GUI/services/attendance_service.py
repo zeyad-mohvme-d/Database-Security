@@ -5,8 +5,20 @@ def view_attendance(username):
     cur = conn.cursor()
     cur.execute(
         "EXEC dbo.ViewAttendance ?",
-        (username,)   # لازم tuple حتى لو عنصر واحد
+        (username,)
     )
     rows = cur.fetchall()
     conn.close()
     return rows
+
+
+def record_attendance(username, student_email, course_id, status):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "EXEC dbo.RecordAttendance ?, ?, ?, ?",
+        (username, student_email, course_id, status)
+    )
+    conn.commit()
+    conn.close()
+

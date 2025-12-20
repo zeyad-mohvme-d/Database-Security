@@ -1,8 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+
+from tensorboard import notebook
 from models.session import Session
 from services.grade_service import enter_or_update_grade, view_grades
 from services.attendance_service import view_attendance
+from services.attendance_service import record_attendance 
+
 
 class InstructorView:
     def __init__(self):
@@ -33,7 +37,7 @@ class InstructorView:
         form = tk.Frame(tab)
         form.pack(pady=10)
 
-        tk.Label(form, text="Student ID").grid(row=0, column=0)
+        tk.Label(form, text="Student Email").grid(row=0, column=0)
         self.g_student = tk.Entry(form)
         self.g_student.grid(row=0, column=1)
 
@@ -78,8 +82,33 @@ class InstructorView:
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
+    # def load_grades(self):
+    #     try:
+    #         for row in self.grades_table.get_children():
+    #             self.grades_table.delete(row)
+
+    #         rows = view_grades(
+    #             Session.username,
+    #             self.g_student.get()
+    #         )
+
+    #         for r in rows:
+    #             self.grades_table.insert(
+    #                 "", "end",
+    #                 values=(r.GradeID, r.CourseID, r.GradeValue, r.DateEntered, r.EnteredBy)
+    #             )
+    #     except Exception as e:
+    #         messagebox.showerror("Error", str(e))
+
+
+    
+
     def load_grades(self):
         try:
+            if not self.g_student.get():
+                messagebox.showerror("Error", "Please enter student email")
+                return
+
             for row in self.grades_table.get_children():
                 self.grades_table.delete(row)
 
@@ -96,7 +125,36 @@ class InstructorView:
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
+
+
     # ---------------- ATTENDANCE TAB ----------------
+    # def attendance_tab(self, notebook):
+    #     tab = ttk.Frame(notebook)
+    #     notebook.add(tab, text="Attendance")
+
+    #     form = tk.Frame(tab)
+    #     form.pack(pady=10)
+
+    #     tk.Label(form, text="Student Username").grid(row=0, column=0)
+    #     self.a_student = tk.Entry(form)
+    #     self.a_student.grid(row=0, column=1)
+
+    #     tk.Button(
+    #         form,
+    #         text="View Attendance",
+    #         command=self.load_attendance
+    #     ).grid(row=1, columnspan=2, pady=5)
+
+    #     self.att_table = ttk.Treeview(
+    #         tab,
+    #         columns=("AttendanceID", "CourseID", "Status", "Date", "By"),
+    #         show="headings"
+    #     )
+    #     for col in self.att_table["columns"]:
+    #         self.att_table.heading(col, text=col)
+    #     self.att_table.pack(fill="both", expand=True, pady=10)
+
+
     def attendance_tab(self, notebook):
         tab = ttk.Frame(notebook)
         notebook.add(tab, text="Attendance")
@@ -104,15 +162,30 @@ class InstructorView:
         form = tk.Frame(tab)
         form.pack(pady=10)
 
-        tk.Label(form, text="Student Username").grid(row=0, column=0)
+        tk.Label(form, text="Student Email").grid(row=0, column=0)
         self.a_student = tk.Entry(form)
         self.a_student.grid(row=0, column=1)
+
+        tk.Label(form, text="Course ID").grid(row=1, column=0)
+        self.a_course = tk.Entry(form)
+        self.a_course.grid(row=1, column=1)
+
+        tk.Label(form, text="Status").grid(row=2, column=0)
+        self.a_status = tk.StringVar(value="1")
+        tk.Radiobutton(form, text="Present", variable=self.a_status, value="1").grid(row=2, column=1)
+        tk.Radiobutton(form, text="Absent", variable=self.a_status, value="0").grid(row=2, column=2)
+
+        tk.Button(
+            form,
+            text="Record Attendance",
+            command=self.record_attendance
+        ).grid(row=3, columnspan=3, pady=5)
 
         tk.Button(
             form,
             text="View Attendance",
             command=self.load_attendance
-        ).grid(row=1, columnspan=2, pady=5)
+        ).grid(row=4, columnspan=3, pady=5)
 
         self.att_table = ttk.Treeview(
             tab,
@@ -123,14 +196,14 @@ class InstructorView:
             self.att_table.heading(col, text=col)
         self.att_table.pack(fill="both", expand=True, pady=10)
 
+
     def load_attendance(self):
         try:
             for row in self.att_table.get_children():
                 self.att_table.delete(row)
 
             rows = view_attendance(
-                Session.username,
-                # str(self.a_student.get())
+                Session.username
             )
 
             for r in rows:
@@ -138,5 +211,27 @@ class InstructorView:
                     "", "end",
                     values=(r.AttendanceID, r.CourseID, r.Status, r.DateRecorded, r.RecordedBy)
                 )
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+
+
+
+
+    def record_attendance(self):
+        try:
+            if not self.a_student.get() or not self.a_course.get():
+                messagebox.showerror("Error", "Please fill all attendance fields")
+                return
+
+            record_attendance(
+                Session.username,
+                self.a_student.get(),
+                int(self.a_course.get()),
+                int(self.a_status.get())
+            )
+
+            messagebox.showinfo("Success", "Attendance recorded successfully")
+
         except Exception as e:
             messagebox.showerror("Error", str(e))
