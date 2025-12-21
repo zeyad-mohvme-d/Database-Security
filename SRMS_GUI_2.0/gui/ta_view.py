@@ -1,7 +1,7 @@
 import tkinter as tk
 from utils.layout import create_section
 
-from services.profile_service import view_profile
+from services.profile_service import view_profile, edit_own_profile
 from services.attendance_service import record_attendance, view_attendance
 from gui.role_request_view import open_role_request_form
 
@@ -30,6 +30,12 @@ def open_ta(username):
         command=lambda: view_profile(username)
     ).pack(fill="x", pady=5)
 
+    tk.Button(
+        profiles,
+        text="Edit My Profile",
+        command=lambda: edit_own_profile(username)
+    ).pack(fill="x", pady=3)
+    
     # =====================
     # Attendance
     # =====================

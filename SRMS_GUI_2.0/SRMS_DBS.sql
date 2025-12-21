@@ -416,22 +416,35 @@ CREATE OR ALTER PROCEDURE EditOwnProfile
 AS
 BEGIN
     SET NOCOUNT ON;
+
     DECLARE @role NVARCHAR(20) = dbo.UserRole(@Username);
     DECLARE @clr  INT = dbo.UserClearance(@Username);
 
-    IF @role NOT IN ('Admin','Instructor','TA') THROW 50006, 'Only Admin/Instructor/TA can edit.', 1;
-    IF @clr > 2 THROW 50007, 'MLS NWD: cannot write to lower classification.', 1;
+    -- Only Admin / Instructor / TA
+    IF @role NOT IN ('Admin','Instructor','TA')
+        THROW 50006, 'Only Admin/Instructor/TA can edit profile.', 1;
 
-    OPEN SYMMETRIC KEY SRMS_AES_Key DECRYPTION BY CERTIFICATE SRMS_Cert;
+    -- Admin edits ONLY his own record
+    IF @Username <> @TargetEmail
+        THROW 50008, 'You can only edit your own profile.', 1;
+
+    OPEN SYMMETRIC KEY SRMS_AES_Key
+        DECRYPTION BY CERTIFICATE SRMS_Cert;
 
     UPDATE dbo.Student
-    SET FullName = @FullName,
-        PhoneEnc = EncryptByKey(Key_GUID('SRMS_AES_Key'), CONVERT(VARBINARY(20), @Phone))
+    SET
+        FullName = @FullName,
+        PhoneEnc = EncryptByKey(
+            Key_GUID('SRMS_AES_Key'),
+            CONVERT(VARBINARY(20), @Phone)
+        ),
+        ClearanceLevel = @clr   -- MLS FIX
     WHERE Email = @TargetEmail;
 
     CLOSE SYMMETRIC KEY SRMS_AES_Key;
 END
 GO
+
 
 -- Grades
 CREATE OR ALTER PROCEDURE EnterOrUpdateGrade
@@ -903,6 +916,19 @@ VALUES
  2
 );
 GO
+
+INSERT INTO dbo.Student
+(StudentID_Enc, FullName, Email, PhoneEnc, DOB, Department, ClearanceLevel)
+VALUES
+(
+ EncryptByKey(Key_GUID('SRMS_AES_Key'), CONVERT(VARBINARY(20), '1002')),
+ 'Mohamed Hassan',
+ 'stud2@nu.edu',
+ EncryptByKey(Key_GUID('SRMS_AES_Key'), CONVERT(VARBINARY(20), '01022223333')),
+ '2001-05-15',
+ 'Computer Science',
+ 2
+);
 
 
 INSERT INTO dbo.Course

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from utils.layout import create_section
 
-from services.profile_service import view_profile
+from services.profile_service import view_profile, edit_own_profile
 from services.grade_service import enter_or_update_grade, view_grades
 from services.attendance_service import view_attendance
 from services.role_request_service import (
@@ -36,6 +36,12 @@ def open_admin(username):
         text="View All Profiles",
         command=lambda: view_profile(username)
     ).pack(fill="x", pady=4)
+
+    tk.Button(
+        profiles,
+        text="Edit My Profile",
+        command=lambda: edit_own_profile(username)
+    ).pack(fill="x", pady=3)
 
     # =========================
     # Grades

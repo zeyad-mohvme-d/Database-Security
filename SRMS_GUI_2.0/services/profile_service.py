@@ -1,5 +1,5 @@
 from db.connection import get_connection
-from tkinter import messagebox
+from tkinter import messagebox,simpledialog
 
 def view_profile(username):
     try:
@@ -24,6 +24,28 @@ def view_profile(username):
             )
 
         messagebox.showinfo("My Profile", result)
+
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+
+def edit_own_profile(username):
+    full_name = simpledialog.askstring("Edit Profile", "New Full Name:")
+    phone = simpledialog.askstring("Edit Profile", "New Phone Number:")
+
+    if not full_name or not phone:
+        return
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "EXEC EditOwnProfile ?, ?, ?, ?",
+            username, username, full_name, phone
+        )
+        conn.commit()
+
+        messagebox.showinfo("Success", "Profile updated successfully")
 
     except Exception as e:
         messagebox.showerror("Error", str(e))
